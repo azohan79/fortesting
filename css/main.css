@@ -1,0 +1,16 @@
+* {
+    padding: 0;
+    margin: 0;
+    box-sizing: border-box;
+    outline: none;
+    text-decoration: none;
+    border: none;
+}
+body {
+    min-height: 100vh !important;
+    width: 100%;
+}
+body.menu-active {
+    overflow: hidden;
+    height: 100vh;
+}

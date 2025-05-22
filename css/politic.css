@@ -1,0 +1,55 @@
+.politic {
+    width: 100%;
+    display: flex;
+    justify-content: center;
+    padding-top: 140px;
+    padding-bottom: 93px;
+}
+.politic__cont {
+    width: 734px;
+}
+.politic__head {
+    margin-bottom: 55px;
+    font-family: var(--font-secondary);
+    color: var(--white);
+    width: 100%;
+    text-align: center;
+}
+.politic__body {
+    width: 100%;
+    color: var(--white);
+    font-family: var(--font-primary);
+    font-weight: 300;
+}
+.politic__body p {
+    margin-bottom: 20px;
+}
+.politic__body p:last-child {
+    margin-bottom: 0;
+}
+@media (max-width: 1399px) {
+    .politic {
+        padding-top: 53px;
+        padding-bottom: 91px;
+    }
+    .politic__head {
+        margin-bottom: 60px;
+        font-size: 24px;
+        line-height: 102.02%;
+    }
+    .politic__cont {
+        width: 468px;
+    }
+}
+@media (max-width: 767px) {
+    .politic {
+        padding-bottom: 5px;
+    }
+    .politic__head {
+        margin-bottom: 35px;
+    }
+    .politic__cont {
+        width: 100%;
+        padding: 0 40px;
+    }
+}

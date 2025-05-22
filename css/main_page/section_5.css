@@ -1,0 +1,265 @@
+.mainPage-section-5 {
+    width: 100%;
+    height: 100%;
+    background: var(--dark-dark-grey);
+}
+.mainPage-section-5__head {
+    display: none;
+}
+.mainPage-section-5__body {
+    width: 100%;
+    height: 100%;
+}
+.mainPage-section-5__slider {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: initial;
+    justify-content: flex-start;
+}
+.mainPage-section-5__helper {
+    width: calc(100% / 3);
+    height: 100%;
+}
+.mainPage-section-5__item {
+    width: 100%;
+    height: 100%;
+    position: relative;
+    background-size: cover;
+    background-position: center;
+}
+.mainPage-section-5__block {
+    position: absolute;
+    width: 390px;
+    background: rgba(122, 124, 129, 0.5);
+    backdrop-filter: blur(10px);
+    border-radius: 10px;
+    bottom: 8%;
+    left: 50%;
+    transform: translateX(-50%);
+    padding: 38px 25px 20px;
+}
+.mainPage-section-5__block-top {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+    margin-bottom: 23px;
+}
+.mainPage-section-5__block-top-img {
+    width: 49px;
+    height: 42px;
+    border: 1px solid #FFFFFF;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-right: 16px;
+}
+.mainPage-section-5__block-top-img svg {
+    width: 24px;
+}
+.mainPage-section-5__block-top-title {
+    font-family: var(--font-secondary);
+    font-style: normal;
+    font-weight: 700;
+    font-size: 16px;
+    line-height: 102.02%;
+    color: var(--white);
+    width: 240px;
+}
+.mainPage-section-5__block-text {
+    font-family: var(--font-primary);
+    color: var(--white);
+    min-height: 72px;
+}
+.mainPage-section-5__block-text p {
+    margin-bottom: 10px;
+    font-size: 10px;
+}
+.mainPage-section-5__block-text p:last-child {
+    margin-bottom: 0;
+}
+.mainPage-section-5__block-bottom {
+    margin-top: 22px;
+    display: flex;
+    align-items: center;
+/*    justify-content: space-between;*/
+}
+.mainPage-section-5__block-info {
+    padding-left: 6px;
+    border-left: 1px solid transparent;
+}
+.yellow .mainPage-section-5__block-info {
+    border-color: var(--yellow);
+}
+.blue .mainPage-section-5__block-info {
+    border-color: #03F8FE;
+}
+.orange .mainPage-section-5__block-info {
+    border-color: var(--orange);
+}
+.mainPage-section-5__block-info-title {
+    font-family: var(--font-primary);
+    color: var(--white);
+    font-weight: 300;
+    font-size: 14px;
+}
+.mainPage-section-5__block-info-text {
+    font-family: var(--font-primary);
+    color: var(--light-light-grey);
+    font-weight: 300;
+}
+.mainPage-section-5__main {
+    position: absolute;
+    bottom: 24%;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    align-items: flex-end;
+    flex-direction: column;
+}
+.mainPage-section-5__main-img {
+    height: 400px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+.mainPage-section-5__main-img img {
+    max-height: 100%;
+}
+.mainPage-section-5__main-info {
+    display: inline-flex;
+    flex-direction: column;
+    align-items: flex-end;
+    margin-left: auto;
+    margin-right: 30px;
+    transform: translateY(50%);
+}
+.mainPage-section-5__main-title {
+    margin-bottom: 8px;
+    font-family: var(--font-secondary);
+    font-style: normal;
+    font-weight: 700;
+    font-size: 14px;
+    line-height: 102.02%;
+    color: var(--white);
+    text-align: left;
+    width: 100%;
+}
+.mainPage-section-5__main-link {
+
+}
+.mainPage-section-5__main-link .mainPage-section-2__link {
+    flex-direction: column;
+    align-items: flex-end;
+}
+.mainPage-section-5__main-link .link-type-1__img {
+    margin-top: 21px;
+    margin-left: 0;
+}
+.mainPage-section-5__slider .slick-dots {
+    position: absolute;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: center;
+    height: 10px;
+    left: 50%;
+    transform: translateX(-50%);
+    top: calc(100% + 16px);
+    z-index: 10;
+    list-style: none;
+}
+.mainPage-section-5__slider .slick-dots li {
+    height: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 2px;
+}
+.mainPage-section-5__slider .slick-dots li::marker {
+    content: '';
+}
+.mainPage-section-5__slider .slick-dots button {
+    content: '';
+    font-size: 0;
+    width: 15px;
+    height: 12px;
+    border-radius: 2px;
+    background: var(--grey2);
+    transition: .3s;
+}
+.mainPage-section-5__slider .slick-dots li.slick-active button {
+    background: var(--main-green);
+}
+@media (min-width: 1399px) {
+    .products-slider__slider-arrow:hover:not(.slick-disabled) {
+        cursor: pointer;
+        transition: .3s;
+        background: var(--main-green);
+    }
+}
+@media (max-width: 1399px) {
+    .mainPage-section-5 {
+        padding-top: 65px;
+        padding-bottom: 40px;
+    }
+    .mainPage-section-5__item {
+        height: 600px;
+    }
+    .mainPage-section-5__head {
+        display: block;
+        padding-left: 53px;
+        font-family: var(--font-secondary);
+        font-style: normal;
+        font-weight: 700;
+        font-size: 36px;
+        line-height: 102.02%;
+        color: var(--white);
+        margin-bottom: 30px;
+    }
+    .mainPage-section-5__slider {
+        flex-wrap: wrap;
+    }
+    .mainPage-section-5__main-img {
+        height: 300px;
+    }
+    .mainPage-section-5__helper {
+        width: 348px;
+
+    }
+    .mainPage-section-5__block {
+        width: calc(100% - 60px);
+        bottom: 30px;
+        padding: 15px;
+        padding-bottom: 18px;
+    }
+    .mainPage-section-5 .link-type-1__text {
+        width: 126px;
+    }
+    .mainPage-section-5__block-text {
+        height: 94px;
+    }
+    .mainPage-section-5__block-info-title {
+        font-weight: 400;
+        font-size: 10px;
+        line-height: 102.02%;
+    }
+    .mainPage-section-5__block-top-title {
+        width: 200px;
+    }
+    .mainPage-section-5__block-top {
+        margin-bottom: 13px;
+    }
+
+}
+@media (max-width: 767px) {
+    .mainPage-section-5 {
+        padding-top: 70px;
+        padding-bottom: 75px;
+    }
+    .mainPage-section-5__head {
+        margin-bottom: 25px;
+    }
+}

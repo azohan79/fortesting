@@ -1,0 +1,126 @@
+.h2 {
+    font-style: normal;
+    font-weight: 700;
+    font-size: 40px;
+    line-height: 102.02%;
+}
+.font-inter {
+    font-family: 'Inter';
+}
+.btn-type-1 {
+    font-family: var(--font-primary);
+    font-style: normal;
+    font-weight: 700;
+    font-size: 20px;
+    line-height: 100%;
+    color: var(--white);
+    padding: 21px 35px;
+    background: var(--main-red);
+    border-radius: 10px;
+    transition: .3s;
+    cursor: pointer;
+}
+.link-type-1 {
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+}
+.link-type-1__text {
+    font-family: var(--font-primary);
+    font-style: normal;
+    font-weight: 500;
+    font-size: 20px;
+    line-height: 100%;
+    color: var(--white);
+}
+.link-type-1__img {
+    display: flex;
+    margin-left: 27px;
+    width: 54px;
+    height: 54px;
+    border-radius: 50%;
+    background: var(--main-red);
+    align-items: center;
+    justify-content: center;
+    transition: .3s;
+}
+.link-type-1__img img {
+    width: 22px;
+}
+.text-type-1 {
+    font-style: normal;
+    font-weight: 400;
+    font-size: 16px;
+    line-height: 100%;
+}
+.text-type-2 {
+    font-style: normal;
+    font-weight: 700;
+    font-size: 18.605px;
+    line-height: 100%;
+}
+.text-type-3 {
+    font-style: normal;
+    font-weight: 500;
+    font-size: 16px;
+    line-height: 102.02%;
+}
+.text-type-4 {
+    font-style: normal;
+    font-weight: 500;
+    font-size: 20px;
+    line-height: 100%;
+}
+.text-type-5 {
+    font-style: normal;
+    font-weight: 500;
+    font-size: 24px;
+    line-height: 27px;
+    text-transform: uppercase;
+}
+.text-type-6 {
+    font-style: normal;
+    font-weight: 500;
+    font-size: 20px;
+    line-height: 102.02%;
+}
+.text-type-7 {
+    font-style: normal;
+    font-weight: 700;
+    font-size: 14px;
+    line-height: 102.02%;
+}
+.text-type-8 {
+    font-style: normal;
+    font-weight: 400;
+    font-size: 10px;
+    line-height: 102.02%;
+}
+.text-type-9 {
+    font-style: normal;
+    font-weight: 400;
+    font-size: 14px;
+    line-height: 102.02%;
+}
+.text-type-10 {
+    font-style: normal;
+    font-weight: 700;
+    font-size: 28px;
+    line-height: 100%;
+}
+.text-type-11 {
+    font-style: normal;
+    font-weight: 900;
+    font-size: 32px;
+    line-height: 100%;
+    text-transform: uppercase;
+}
+@media (min-width: 1399px) {
+    .link-type-1:hover .link-type-1__img {
+        background: rgba(255, 1, 92, 0.5);
+    }
+    .btn-type-1:hover {
+        background: rgba(255, 1, 92, 0.5);
+    }
+}

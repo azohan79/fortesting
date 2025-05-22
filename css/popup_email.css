@@ -1,0 +1,130 @@
+.fancybox-bg {
+    opacity: 1 !important;
+    background: rgba(33, 38, 47, .75) !important;
+    z-index: 1;
+}
+.fancybox-slide--html {
+    padding: 0 !important;
+}
+.fancybox-bg:after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    backdrop-filter: blur(10px);
+    z-index: -1;
+}
+.fancybox-slide--html .fancybox-close-small {
+    padding: 0;
+    top: 10px;
+    right: 10px;
+}
+.fancybox-slide--html .fancybox-close-small path {
+    fill: var(--grey2);
+    transition: .3s;
+}
+.fancybox-close-small {
+    opacity: 1 !important;
+}
+.popupEmail {
+    width: 847px;
+    background: #393F49;
+    backdrop-filter: blur(10px);
+    border-radius: 10px;
+    padding-top: 67px;
+    padding-bottom: 65px;
+}
+.popupEmail__form {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+.popupEmail__head {
+    font-family: var(--font-secondary);
+    font-style: normal;
+    font-weight: 700;
+    font-size: 24px;
+    line-height: 102.02%;
+    color: var(--white);
+    margin-bottom: 40px;
+}
+.popupEmail__body {
+
+}
+.popupEmail__body .input-block {
+    margin-bottom: 20px;
+}
+.popupEmail__body .input-block:last-child {
+    margin-bottom: 0;
+}
+.popupEmail__bottom {
+    margin-top: 33px;
+    width: 100%;
+    display: flex;
+    justify-content: center;
+}
+.popupEmail__bottom-btn {
+    font-size: 16.2474px;
+    line-height: 175%;
+    font-weight: 300;
+    padding: 11px 35px;
+}
+.form-result {
+    width: 100%;
+    display: none;
+    flex-direction: column;
+    align-items: center;
+    padding: 60px 0;
+}
+.form-result__head {
+    font-family: var(--font-secondary);
+    font-style: normal;
+    font-weight: 700;
+    font-size: 24px;
+    line-height: 102.02%;
+    color: var(--white);
+    text-align: center;
+}
+.form-result__head.yellow {
+    color: var(--yellow);
+}
+.form-result__head.red {
+    color: var(--main-red);
+}
+.form-result__body {
+    margin-top: 17px;
+    font-family: var(--font-primary);
+    font-style: normal;
+    font-weight: 400;
+    font-size: 16px;
+    line-height: 102.02%;
+    text-align: center;
+    color: var(--white);
+
+}
+.popupEmail.active .popupEmail__form {
+    display: none;
+}
+.popupEmail.active .form-result {
+    display: flex;
+}
+@media (min-width: 1399px) {
+
+    .fancybox-close-small:hover path {
+        fill: var(--white);
+    }
+}
+@media (max-width: 1399px) {
+    .popupEmail {
+        width: 690px;
+    }
+}
+@media (max-width: 767px) {
+    .popupEmail {
+        width: calc(100% - 50px);
+        padding-left: 15px;
+        padding-right: 15px;
+    }
+}

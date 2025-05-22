@@ -1,0 +1,20 @@
+:root {
+    /*FONTS*/
+    --font-primary: 'Plumb';
+    --font-secondary: 'Jura';
+
+    /*COLORS*/
+    --white: #ffffff;
+    --black: #000;
+    --grey1: #393F49;
+    --grey2: #5E6572;
+    --dark-dark-grey: #21262F;
+    --main-red: #FF015C;
+    --main-green: #BCFD01;
+    --main-green-dark: #6C8F08;
+    --yellow: #FFF500;
+    --orange: #FF9401;
+    --light-light-grey: #C0C2C9;
+    --light-grey: #7A7C81;
+    --light-grey2: #E5E7EB;
+}

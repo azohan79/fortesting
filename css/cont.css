@@ -1,0 +1,15 @@
+.cont {
+    width: 1120px;
+    margin: 0 auto;
+}
+@media (max-width: 1399px) {
+    .cont {
+        width: 688px;
+    }
+}
+@media (max-width: 767px) {
+    .cont {
+        width: 100%;
+        padding: 0 40px;
+    }
+}

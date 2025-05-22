@@ -1,0 +1,35 @@
+.fp-right {
+    position: fixed;
+    top: calc(50% - 7%);
+    transform: translateY(-50%);
+    right: 20px;
+}
+.fp-right ul {
+    list-style: none;
+}
+.fp-right a {
+    display: block;
+    font-family: var(--font-secondary);
+    font-style: normal;
+    font-weight: 700;
+    font-size: 20px;
+    line-height: 102.02%;
+    text-align: center;
+    color: var(--grey1);
+    padding: 15px 0;
+    transition: .3s;
+}
+.fp-right a:hover {
+    color: var(--main-green);
+}
+.fp-right a.active {
+    color: var(--white);
+}
+.fp-tooltip {
+    display: none;
+}
+@media (max-width: 1399px) {
+    .fp-right {
+        display: none;
+    }
+}
