@@ -21,20 +21,19 @@ jobs:
 
       - name: Install dependencies
         run: |
-          pip install --upgrade pip
+          python -m pip install --upgrade pip
           pip install -r requirements.txt
-          pip install pytest junitparser
+          pip install pytest requests junitparser
 
-      - name: Run Pytest with XML output
+      - name: Run pytest with XML output
         run: |
-          mkdir -p test-reports
-          pytest tests/ --junitxml=test-reports/pytest_results.xml || true
+          pytest tests/ --junitxml=pytest_results.xml
 
-      - name: Upload Pytest Report
+      - name: Upload Pytest Results
         uses: actions/upload-artifact@v4
         with:
           name: pytest-results
-          path: test-reports/pytest_results.xml
+          path: pytest_results.xml
 
   sonarcloud:
     name: SonarCloud Analysis
@@ -42,7 +41,6 @@ jobs:
     needs: test
     steps:
       - uses: actions/checkout@v3
-
       - name: Set up Python
         uses: actions/setup-python@v4
         with:
@@ -51,18 +49,12 @@ jobs:
       - name: Install dependencies
         run: |
           pip install -r requirements.txt
-          pip install coverage
+          pip install coverage requests
 
-      - name: Run coverage & create XML
+      - name: Run tests with coverage
         run: |
-          coverage run -m pytest || true
-          coverage xml -o coverage.xml
-
-      - name: Upload Coverage Report
-        uses: actions/upload-artifact@v4
-        with:
-          name: coverage
-          path: coverage.xml
+          coverage run -m pytest
+          coverage xml
 
       - name: SonarCloud Scan
         uses: SonarSource/sonarcloud-github-action@v2
@@ -72,19 +64,18 @@ jobs:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
 
   zap_scan:
-    name: OWASP ZAP Scan
+    name: OWASP ZAP Manual Scan
     runs-on: ubuntu-latest
     needs: [test, sonarcloud]
     steps:
       - name: Checkout repository
         uses: actions/checkout@v3
 
-      - name: Run ZAP Scan
+      - name: Run ZAP Full Scan
         run: |
-          mkdir -p zap-reports
           docker run --rm \
             --user root \
-            -v $(pwd)/zap-reports:/zap/wrk \
+            -v $(pwd):/zap/wrk \
             ghcr.io/zaproxy/zaproxy:stable \
             sh -c "\
               zap-full-scan.py \
@@ -99,12 +90,12 @@ jobs:
         with:
           name: zap-report
           path: |
-            zap-reports/zap_report.json
-            zap-reports/zap_report.md
-            zap-reports/zap_report.html
+            zap_report.json
+            zap_report.md
+            zap_report.html
 
   gpt_analysis:
-    name: Generate GPT Report
+    name: Generate GPT Security QA Report
     runs-on: ubuntu-latest
     needs: [zap_scan]
     steps:
