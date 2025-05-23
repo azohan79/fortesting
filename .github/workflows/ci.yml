@@ -78,7 +78,6 @@ jobs:
           name: sonar-report
           path: sonar-report.json
 
-
   zap_scan:
     name: OWASP ZAP Manual Scan
     runs-on: ubuntu-latest
@@ -125,9 +124,12 @@ jobs:
 
       - name: Install report dependencies
         run: |
-          pip install junitparser
+          pip install --upgrade pip
+          pip install openai junitparser
 
       - name: Run GPT Analysis Script
+        env:
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
         run: |
           python .github/scripts/gpt_analysis.py
 
