@@ -1,19 +1,20 @@
 import os
 import json
-from openai import OpenAI
-from junitparser import JUnitXml
 from pathlib import Path
+from junitparser import JUnitXml
+from openai import OpenAI
 from xml.etree.ElementTree import ParseError
 
 TEST_XML_PATH = "pytest_results.xml"
-ZAP_REPORT_PATH = "zap_report.json"
+SONAR_JSON_PATH = "sonar-report.json"
+ZAP_JSON_PATH = "zap_report.json"
 OUTPUT_PATH = "gpt_report.html"
 
 
 def extract_pytest_summary(xml_path):
     path = Path(xml_path)
     if not path.exists() or path.stat().st_size == 0:
-        return "<h2>Pytest Summary</h2><p>❌ No valid pytest results found.</p>"
+        return "<h2>Pytest Summary</h2><p>❌ No valid pytest results found.</p>", ""
     try:
         xml = JUnitXml.fromfile(xml_path)
         total = errors = failures = skips = 0
@@ -22,7 +23,7 @@ def extract_pytest_summary(xml_path):
             errors += suite.errors
             failures += suite.failures
             skips += suite.skipped
-        return f"""
+        html = f"""
         <h2>Pytest Summary</h2>
         <ul>
             <li>Total: {total}</li>
@@ -31,49 +32,72 @@ def extract_pytest_summary(xml_path):
             <li>Skipped: {skips}</li>
         </ul>
         """
+        return html, f"Total={total}, Failures={failures}, Errors={errors}, Skipped={skips}"
     except ParseError:
-        return "<h2>Pytest Summary</h2><p>❌ Failed to parse pytest_results.xml</p>"
+        return "<h2>Pytest Summary</h2><p>❌ Failed to parse pytest_results.xml</p>", "ParseError"
 
 
-def extract_zap_summary(zap_json_path):
-    path = Path(zap_json_path)
+def extract_zap_summary(zap_path):
+    path = Path(zap_path)
     if not path.exists():
-        return "<h2>ZAP Summary</h2><p>❌ zap_report.json not found.</p>"
+        return "<h2>ZAP Summary</h2><p>❌ zap_report.json not found.</p>", ""
     if path.stat().st_size == 0:
-        return "<h2>ZAP Summary</h2><p>❌ zap_report.json is empty.</p>"
+        return "<h2>ZAP Summary</h2><p>❌ zap_report.json is empty.</p>", ""
     try:
-        with open(zap_json_path, 'r') as f:
-            zap_data = json.load(f)
-        alerts = zap_data.get("site", [])[0].get("alerts", [])
-        summary = f"<h2>ZAP Alerts</h2><p>{len(alerts)} alerts found for http://test.anywatt.es</p><ul>"
-        for alert in alerts:
-            summary += f"<li>{alert['alert']} (Risk: {alert['riskdesc']})</li>"
-        summary += "</ul>"
-        return summary
-    except json.JSONDecodeError:
-        return "<h2>ZAP Summary</h2><p>❌ Failed to parse zap_report.json (invalid JSON).</p>"
+        with open(zap_path, "r") as f:
+            data = json.load(f)
+        alerts = data.get("site", [])[0].get("alerts", [])
+        html = f"<h2>ZAP Alerts</h2><p>{len(alerts)} alerts found</p>"
+        detail = ""
+        for alert in alerts[:10]:
+            html += f"""
+            <details><summary>{alert['alert']} (Risk: {alert['riskdesc']})</summary>
+            <ul>
+                <li><strong>URL:</strong> {alert.get('url', 'N/A')}</li>
+                <li><strong>Param:</strong> {alert.get('param', 'N/A')}</li>
+                <li><strong>Evidence:</strong> {alert.get('evidence', 'N/A')}</li>
+                <li><strong>Description:</strong> {alert.get('desc', 'N/A')}</li>
+                <li><strong>Recommendation:</strong> {alert.get('solution', 'N/A')}</li>
+            </ul></details>"""
+            detail += f"\n- {alert['alert']} ({alert['riskdesc']}) @ {alert.get('url', '')}"
+        return html, detail
+    except Exception as e:
+        return f"<h2>ZAP Summary</h2><p>❌ Error parsing ZAP: {e}</p>", "Error"
 
 
-def extract_sonar_summary():
-    # TODO: Реальное чтение sonar-report.json при наличии
-    return """
-    <h2>SonarCloud Summary</h2>
-    <ul>
-        <li>Coverage: 78%</li>
-        <li>Code Smells: 5</li>
-        <li>Bugs: 2</li>
-        <li>Vulnerabilities: 1</li>
-    </ul>
-    """
+def extract_sonar_summary(sonar_path):
+    path = Path(sonar_path)
+    if not path.exists():
+        return "<h2>SonarCloud Summary</h2><p>❌ sonar-report.json not found.</p>", ""
+    try:
+        with open(sonar_path, "r") as f:
+            data = json.load(f)
+        issues = data.get("issues", [])
+        bugs = [i for i in issues if i.get("type") == "BUG"]
+        vulns = [i for i in issues if i.get("type") == "VULNERABILITY"]
+        smells = [i for i in issues if i.get("type") == "CODE_SMELL"]
+
+        html = f"<h2>SonarCloud Summary</h2><ul><li>Bugs: {len(bugs)}</li><li>Vulnerabilities: {len(vulns)}</li><li>Code Smells: {len(smells)}</li></ul>"
+        detail = ""
+        for issue in issues[:10]:
+            component = issue.get("component", "")
+            message = issue.get("message", "")
+            severity = issue.get("severity", "")
+            line = issue.get("line", "")
+            typ = issue.get("type", "")
+            html += f"""
+            <details><summary>{typ} ({severity}) in {component}:{line}</summary>
+            <p>{message}</p>
+            </details>"""
+            detail += f"\n- {typ} [{severity}] {component}:{line} – {message}"
+        return html, detail
+    except Exception as e:
+        return f"<h2>SonarCloud Summary</h2><p>❌ Error parsing SonarCloud report: {e}</p>", "Error"
 
 
 def generate_gpt_report(context):
-    client = OpenAI()  # автоматически использует OPENAI_API_KEY
-    system_prompt = (
-        "You are a software quality and security analyst. "
-        "Summarize and assess the following scan/test results. "
-        "Provide a structured and concise report in valid HTML with recommended improvements."
-    )
+    client = OpenAI()
+    system_prompt = "You are a senior security analyst. Analyze the following scan results and provide commentary with specific technical suggestions for improving the security and quality of the codebase."
 
     response = client.chat.completions.create(
         model="gpt-4",
@@ -86,27 +110,37 @@ def generate_gpt_report(context):
 
 
 def main():
-    pytest_summary = extract_pytest_summary(TEST_XML_PATH)
-    zap_summary = extract_zap_summary(ZAP_REPORT_PATH)
-    sonar_summary = extract_sonar_summary()
+    pytest_html, pytest_detail = extract_pytest_summary(TEST_XML_PATH)
+    zap_html, zap_detail = extract_zap_summary(ZAP_JSON_PATH)
+    sonar_html, sonar_detail = extract_sonar_summary(SONAR_JSON_PATH)
 
-    full_context = f"""
-    <html>
-    <head><meta charset='UTF-8'><title>Security & QA Report</title></head>
-    <body>
-        <h1>Automated Security & QA Analysis for http://test.anywatt.es</h1>
-        {pytest_summary}
-        {sonar_summary}
-        {zap_summary}
-    </body>
-    </html>
+    base_html = f"""
+    <html><head><meta charset='utf-8'><title>Security & QA Report</title></head><body>
+    <h1>Security & Quality Analysis Report</h1>
+    {pytest_html}
+    {sonar_html}
+    {zap_html}
+    <hr><h2>AI-Assisted Summary</h2><p>Generating...</p>
+    </body></html>
     """
 
-    report = generate_gpt_report(full_context)
+    context = f"""
+    PYTEST RESULTS:
+    {pytest_detail}
 
-    with open(OUTPUT_PATH, "w", encoding="utf-8") as f:
-        f.write(report)
-    print("✅ GPT HTML report generated: gpt_report.html")
+    SONARCLOUD ISSUES:
+    {sonar_detail}
+
+    ZAP ALERTS:
+    {zap_detail}
+    """
+
+    gpt_response = generate_gpt_report(context)
+    full_html = base_html.replace("<p>Generating...</p>", f"<div>{gpt_response}</div>")
+
+    with open(OUTPUT_PATH, "w") as f:
+        f.write(full_html)
+    print("✅ Enhanced GPT Report generated at", OUTPUT_PATH)
 
 
 if __name__ == "__main__":
