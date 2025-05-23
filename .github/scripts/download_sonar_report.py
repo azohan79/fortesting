@@ -2,10 +2,10 @@ import requests
 import os
 
 token = os.getenv("SONAR_TOKEN")
-project = "azohan79_fortesting"
-org = "azohan79"
-url = f"https://sonarcloud.io/api/issues/search?organization={org}&componentKeys={project}&ps=500"
+project = "azohan79_fortesting"  # ❗ Замените на ваш actual sonar.projectKey
+org = "azohan79"                 # ❗ Замените на вашу организацию в SonarCloud
 
+url = f"https://sonarcloud.io/api/issues/search?organization={org}&componentKeys={project}&ps=500"
 resp = requests.get(url, headers={"Authorization": f"Bearer {token}"})
 resp.raise_for_status()
 
