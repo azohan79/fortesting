@@ -39,8 +39,10 @@ jobs:
     name: SonarCloud Analysis
     runs-on: ubuntu-latest
     needs: test
+
     steps:
-      - uses: actions/checkout@v3
+      - name: Checkout repository
+        uses: actions/checkout@v3
 
       - name: Set up Python
         uses: actions/setup-python@v4
@@ -50,35 +52,48 @@ jobs:
       - name: Install dependencies
         run: |
           pip install -r requirements.txt
-          pip install coverage
+          pip install coverage requests
 
       - name: Run tests with coverage
         run: |
           coverage run -m pytest
           coverage xml
 
-      - name: Prepare sonar-project.properties
-        run: |
-          echo "sonar.projectKey=azohan79_fortesting" > sonar-project.properties
-          echo "sonar.organization=azohan79" >> sonar-project.properties
-          echo "sonar.projectName=fortesting" >> sonar-project.properties
-          echo "sonar.projectVersion=1.0" >> sonar-project.properties
-          echo "sonar.sources=." >> sonar-project.properties
-          echo "sonar.sourceEncoding=UTF-8" >> sonar-project.properties
-          echo "sonar.python.coverage.reportPaths=coverage.xml" >> sonar-project.properties
-          echo "sonar.report.export.path=sonar-report.json" >> sonar-project.properties
-
-      - name: SonarCloud Scan with JSON Export
+      - name: SonarCloud Scan
         uses: SonarSource/sonarcloud-github-action@v2
+        with:
+          projectBaseDir: .
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
 
-      - name: Upload Sonar Report
+      - name: Download SonarCloud report via API
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+        run: |
+          echo "🔍 Downloading SonarCloud issues as JSON"
+          python <<EOF
+import requests
+import os
+
+token = os.getenv("SONAR_TOKEN")
+project = "azohan79_fortesting"
+org = "azohan79"
+
+url = f"https://sonarcloud.io/api/issues/search?organization={org}&componentKeys={project}&ps=500"
+resp = requests.get(url, headers={"Authorization": f"Bearer {token}"})
+resp.raise_for_status()
+
+with open("sonar-report.json", "w") as f:
+    f.write(resp.text)
+
+print("✅ sonar-report.json saved.")
+EOF
+
+      - name: Upload SonarCloud report JSON
         uses: actions/upload-artifact@v4
         with:
           name: sonar-report
           path: sonar-report.json
-
 
 
   zap_scan:
