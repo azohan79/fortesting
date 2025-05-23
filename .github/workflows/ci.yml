@@ -71,30 +71,29 @@ jobs:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
         run: |
           echo "🔍 Downloading SonarCloud issues as JSON"
-          python <<EOF
-import requests
+          echo "import requests
 import os
 
-token = os.getenv("SONAR_TOKEN")
-project = "azohan79_fortesting"
-org = "azohan79"
+token = os.getenv('SONAR_TOKEN')
+project = 'azohan79_fortesting'
+org = 'azohan79'
 
-url = f"https://sonarcloud.io/api/issues/search?organization={org}&componentKeys={project}&ps=500"
-resp = requests.get(url, headers={"Authorization": f"Bearer {token}"})
+url = f'https://sonarcloud.io/api/issues/search?organization={org}&componentKeys={project}&ps=500'
+resp = requests.get(url, headers={'Authorization': f'Bearer {token}'})
 resp.raise_for_status()
 
-with open("sonar-report.json", "w") as f:
+with open('sonar-report.json', 'w') as f:
     f.write(resp.text)
 
-print("✅ sonar-report.json saved.")
-EOF
+print('✅ sonar-report.json saved.')
+" > get_sonar_report.py
+          python get_sonar_report.py
 
       - name: Upload SonarCloud report JSON
         uses: actions/upload-artifact@v4
         with:
           name: sonar-report
           path: sonar-report.json
-
 
   zap_scan:
     name: OWASP ZAP Manual Scan
