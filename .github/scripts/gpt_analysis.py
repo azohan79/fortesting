@@ -110,7 +110,7 @@ def main():
     prompt = build_prompt(pytest_summary, sonar_issues, zap_alerts)
 
     resp = client.chat.completions.create(
-        model="gpt-4o-mini",
+        model="gpt-4",
         messages=[{"role": "user", "content": prompt}],
         temperature=0.2,
     )
