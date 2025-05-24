@@ -2,12 +2,9 @@
 # -*- coding: utf-8 -*-
 
 import json
-import openai
 import os
+from openai import OpenAI
 from junitparser import JUnitXml
-
-# 1) Настройка API-ключа
-openai.api_key = os.getenv("OPENAI_API_KEY")
 
 def load_text(path):
     with open(path, encoding='utf-8') as f:
@@ -31,8 +28,6 @@ def summarize_sonar(sonar_path, max_items=10):
 
 def build_prompt(pytest_summary, sonar_summary, zap_html):
     return f"""
-You are a senior Security QA engineer. Generate a full HTML report with sections:
-
 <h1>1. Pytest Results</h1>
 <pre>{pytest_summary}</pre>
 
@@ -42,27 +37,32 @@ You are a senior Security QA engineer. Generate a full HTML report with sections
 </pre>
 
 <h1>3. OWASP ZAP Findings</h1>
-Please parse this HTML and list each finding with its risk and recommendation:
+Вставьте каждый найденный уязвимый пункт с уровнем риска и рекомендацией:
 <details><summary>ZAP Report HTML</summary>
 {zap_html}
 </details>
 
 <h1>4. AI-Assisted Summary & Recommendations</h1>
-Provide a concise executive summary and prioritized next steps.
+Предоставьте краткий executive summary и приоритетные шаги.
 """
 
 def main():
+    # пути к артефактам
     pytest_xml = "pytest_results.xml"
     sonar_json = "sonar-report.json"
     zap_html   = "zap_report.html"
 
+    # парсим данные
     pytest_summary = parse_pytest(pytest_xml)
     sonar_summary  = summarize_sonar(sonar_json)
     zap_content    = load_text(zap_html)
 
+    # собираем промпт
     prompt = build_prompt(pytest_summary, sonar_summary, zap_content)
 
-    response = openai.ChatCompletion.create(
+    # инициализируем клиент и делаем запрос
+    client = OpenAI()
+    response = client.chat.completions.create(
         model="gpt-4o-mini",
         messages=[{"role":"user","content":prompt}],
         temperature=0.2,
@@ -70,6 +70,7 @@ def main():
 
     report_html = response.choices[0].message.content
 
+    # сохраняем результат
     with open("gpt_report.html", "w", encoding='utf-8') as f:
         f.write(report_html)
 
