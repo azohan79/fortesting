@@ -109,7 +109,6 @@ jobs:
     steps:
       - uses: actions/checkout@v3
 
-      # bring in the earlier artifacts
       - name: Download Pytest Results
         uses: actions/download-artifact@v4
         with:
@@ -140,6 +139,7 @@ jobs:
       - name: Run GPT Analysis Script
         env:
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          OPENAI_MODEL: gpt-3.5-turbo
         run: python .github/scripts/gpt_analysis.py
 
       - name: Upload GPT Report

@@ -5,7 +5,9 @@ import datetime
 import xml.etree.ElementTree as ET
 from openai import OpenAI
 
-client = OpenAI()  # uses OPENAI_API_KEY env var
+# Имена моделей можно менять через переменную окружения OPENAI_MODEL
+MODEL = os.getenv("OPENAI_MODEL", "gpt-3.5-turbo")
+client = OpenAI()
 
 def parse_pytest(xml_path):
     tree = ET.parse(xml_path)
@@ -26,7 +28,7 @@ def parse_pytest(xml_path):
 def load_sonar(sonar_path):
     with open(sonar_path, encoding="utf-8") as f:
         data = json.load(f)
-    # filter only MAJOR and CRITICAL
+    # фильтруем только MAJOR и CRITICAL
     return [
         issue for issue in data.get("issues", [])
         if issue["severity"] in ("MAJOR", "CRITICAL")
@@ -35,7 +37,7 @@ def load_sonar(sonar_path):
 def load_zap(zap_path):
     with open(zap_path, encoding="utf-8") as f:
         data = json.load(f)
-    # filter only High and Medium
+    # фильтруем только High и Medium
     return [
         alert for alert in data.get("alerts", [])
         if alert.get("risk", "").lower() in ("high", "medium")
@@ -63,8 +65,11 @@ def build_prompt(pytest_summary, sonar_issues, zap_alerts):
 3. Проблемы кода по данным SonarCloud (MAJOR и CRITICAL):
 """)
 
-    # 2. Sonar issues
-    for i in sonar_issues:
+    # 2. Sonar issues — только первые 10
+    MAX_SONAR = 10
+    top_sonar = sonar_issues[:MAX_SONAR]
+    parts.append(f"Найдено {len(sonar_issues)} проблем MAJOR/CRITICAL, показаны первые {len(top_sonar)}:\n")
+    for i in top_sonar:
         parts.append(
             f"- Правило: `<code>{i['rule']}</code>` | Уровень: {i['severity']} | "
             f"Строка: {i['textRange']['startLine']}  \n"
@@ -72,10 +77,13 @@ def build_prompt(pytest_summary, sonar_issues, zap_alerts):
             f"  Теги: {', '.join(i.get('tags', [])) or '–'}  \n"
             f"  Рекомендация: Проверьте документацию по правилу {i['rule']} на sonarcloud.io\n\n"
         )
+    if len(sonar_issues) > MAX_SONAR:
+        parts.append(f"... и ещё {len(sonar_issues)-MAX_SONAR} подобных проблем опущено для краткости\n\n")
 
-    # 3. ZAP alerts
-    parts.append("4. OWASP ZAP-алерты (High и Medium):\n")
-    for a in zap_alerts:
+    # 3. ZAP alerts — только топ-5 по риску
+    parts.append(f"4. OWASP ZAP-алерты (High/Medium), показаны 5 самых рискованных из {len(zap_alerts)}:\n")
+    top_zap = sorted(zap_alerts, key=lambda a: a.get("risk"), reverse=True)[:5]
+    for a in top_zap:
         parts.append(
             f"<details><summary>{a.get('alert')}</summary>\n"
             "<ul>\n"
@@ -88,6 +96,8 @@ def build_prompt(pytest_summary, sonar_issues, zap_alerts):
             "</ul>\n"
             "</details>\n\n"
         )
+    if len(zap_alerts) > 5:
+        parts.append(f"... и ещё {len(zap_alerts)-5} алертов опущено для краткости\n\n")
 
     # 4. Conclusion
     parts.append("""
@@ -110,7 +120,7 @@ def main():
     prompt = build_prompt(pytest_summary, sonar_issues, zap_alerts)
 
     resp = client.chat.completions.create(
-        model="gpt-4",
+        model=MODEL,
         messages=[{"role": "user", "content": prompt}],
         temperature=0.2,
     )
