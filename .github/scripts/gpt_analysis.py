@@ -1,86 +1,101 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
-import json
 import os
-from openai import OpenAI
+import json
+from datetime import datetime
+import openai
 from junitparser import JUnitXml
 
+# --- Настройка API-ключа ---
+openai.api_key = os.getenv("OPENAI_API_KEY")
+
+# --- Парсинг Pytest XML ---
 def parse_pytest(xml_path):
     xml = JUnitXml.fromfile(xml_path)
     total    = sum(suite.tests    for suite in xml)
     failures = sum(suite.failures for suite in xml)
     errors   = sum(suite.errors   for suite in xml)
     skipped  = sum(suite.skipped  for suite in xml)
-    return f"Total: {total}, Failures: {failures}, Errors: {errors}, Skipped: {skipped}"
+    passed   = total - failures - errors - skipped
+    return {
+        "total": total,
+        "passed": passed,
+        "failures": failures,
+        "errors": errors,
+        "skipped": skipped
+    }
 
-def summarize_sonar(sonar_path, max_items=10):
-    data = json.load(open(sonar_path, encoding='utf-8'))
-    issues = data.get("issues", [])[:max_items]
-    if not issues:
-        return "Нет новых проблем."
-    lines = []
-    for i, iss in enumerate(issues, 1):
-        rule = iss.get("rule")
-        sev  = iss.get("severity")
-        msg  = iss.get("message","").split("\n")[0]
-        comp = iss.get("component","").split(":")[-1]
-        lines.append(f"{i}. [{comp}] {rule} ({sev}): {msg}")
-    return "\n".join(lines)
+# --- Загрузка SonarCloud JSON ---
+def load_sonar(sonar_path):
+    return json.load(open(sonar_path, encoding="utf-8"))
 
-def summarize_zap(zap_json_path, max_items=10):
-    data = json.load(open(zap_json_path, encoding='utf-8'))
-    alerts = []
-    for site in data.get("site", []):
-        alerts.extend(site.get("alerts", []))
-    alerts = alerts[:max_items]
-    if not alerts:
-        return "Уязвимости не найдены."
-    lines = []
-    for i, a in enumerate(alerts, 1):
-        name = a.get("name", "N/A")
-        risk = a.get("risk", "UNKNOWN")
-        url  = a.get("uri", a.get("url", ""))
-        lines.append(f"{i}. {name} (Risk: {risk}) — {url}")
-    return "\n".join(lines)
+# --- Загрузка ZAP JSON ---
+def load_zap(zap_path):
+    return json.load(open(zap_path, encoding="utf-8"))
 
-def build_prompt(pytest_summary, sonar_summary, zap_summary):
+# --- Сборка prompt ---
+def build_prompt(pytest, sonar, zap):
+    now = datetime.now().strftime("%d.%m.%Y %H:%M")
+    repo = os.getenv("GITHUB_REPOSITORY")
+    repo_url = f"https://github.com/{repo}"
     return f"""
-<h2>1. Pytest Results</h2>
-<pre>{pytest_summary}</pre>
+Сформируй подробный отчет по результатам CI/CD анализа веб-приложения. У тебя есть три источника:
 
-<h2>2. SonarCloud Top Issues</h2>
-<pre>{sonar_summary}</pre>
+1. Результаты unit-тестирования Pytest в виде XML.
+2. Отчет SonarCloud в формате JSON с анализом исходного кода.
+3. Отчет OWASP ZAP в формате JSON с результатами сканирования веб-приложения.
 
-<h2>3. OWASP ZAP Top Alerts</h2>
-<pre>{zap_summary}</pre>
+📌 Заголовок:
+Отчет по результатам CI/CD-пайплайна <a href="{repo_url}">{repo}</a>
 
-<h2>4. Executive Summary and Prioritization</h2>
-Сделайте краткий executive summary и приоритизацию исправлений в формате HTML.
+📌 Структура:
+1. Дата и время анализа: {now}
+2. Результаты Pytest: общее количество тестов — {pytest["total"]}, пройдено — {pytest["passed"]}, провалено — {pytest["failures"]}, ошибок — {pytest["errors"]}, пропущено — {pytest["skipped"]}.
+3. Проблемы кода по данным SonarCloud:
+   - Покажи только MAJOR и CRITICAL ошибки.
+   - Для каждой: правило, уровень серьезности, строка, сообщение, пояснение, пример кода (если есть).
+   - Добавь комментарий SonarCloud и рекомендацию.
+4. OWASP ZAP-алерты:
+   - Выведи только High и Medium риски.
+   - Для каждого: название, риск, количество инстансов, URL, параметр, метод, пример атаки, рекомендация.
+   - Оберни каждую уязвимость в тег <details><summary>Название</summary><ul>…</ul></details>
+5. Итоговое заключение:
+   - Подведи итоги по всем найденным проблемам.
+   - Перечисли ключевые проблемы безопасности, качества кода и конфигурации.
+   - Дай конкретные рекомендации: что исправить в первую очередь, что улучшить по безопасности и качеству.
+
+📌 Формат вывода:
+HTML-страница со структурированными разделами и понятными подзаголовками. Используй теги <ul>, <li>, <code>, <div class="example">, <details>, <summary>.
+
+📌 Язык: Русский.
 """
 
 def main():
+    # Пути к артефактам
     pytest_xml = "pytest_results.xml"
     sonar_json = "sonar-report.json"
     zap_json   = "zap_report.json"
 
+    # Читаем данные
     pytest_summary = parse_pytest(pytest_xml)
-    sonar_summary  = summarize_sonar(sonar_json)
-    zap_summary    = summarize_zap(zap_json)
+    sonar_data     = load_sonar(sonar_json)
+    zap_data       = load_zap(zap_json)
 
-    prompt = build_prompt(pytest_summary, sonar_summary, zap_summary)
+    # Формируем prompt
+    prompt = build_prompt(pytest_summary, sonar_data, zap_data)
 
-    client = OpenAI()
-    response = client.chat.completions.create(
-        model="gpt-4",           # <-- используем именно эту модель
-        messages=[{"role":"user","content":prompt}],
+    # Вызываем API
+    response = openai.ChatCompletion.create(
+        model="gpt-4",
+        messages=[{"role": "user", "content": prompt}],
         temperature=0.2,
     )
 
-    report_html = response.choices[0].message.content
-
-    with open("gpt_report.html", "w", encoding='utf-8') as f:
-        f.write(report_html)
+    # Пишем результат
+    html = response.choices[0].message.content
+    with open("gpt_report.html", "w", encoding="utf-8") as f:
+        f.write(html)
 
 if __name__ == "__main__":
     main()
