@@ -39,7 +39,6 @@ jobs:
     name: SonarCloud Analysis
     runs-on: ubuntu-latest
     needs: test
-
     steps:
       - name: Checkout repository
         uses: actions/checkout@v3
@@ -106,7 +105,6 @@ jobs:
           name: zap-report
           path: |
             zap_report.json
-            zap_report.md
             zap_report.html
 
   gpt_analysis:
@@ -117,6 +115,24 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v3
 
+      - name: Download Pytest results
+        uses: actions/download-artifact@v4
+        with:
+          name: pytest-results
+          path: .
+
+      - name: Download SonarCloud report
+        uses: actions/download-artifact@v4
+        with:
+          name: sonar-report
+          path: .
+
+      - name: Download ZAP report
+        uses: actions/download-artifact@v4
+        with:
+          name: zap-report
+          path: .
+
       - name: Set up Python
         uses: actions/setup-python@v4
         with:
@@ -124,8 +140,8 @@ jobs:
 
       - name: Install report dependencies
         run: |
-          pip install --upgrade pip
-          pip install openai junitparser
+          python -m pip install --upgrade pip
+          pip install openai junitparser requests
 
       - name: Run GPT Analysis Script
         env:

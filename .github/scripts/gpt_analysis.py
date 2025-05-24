@@ -1,71 +1,80 @@
-import os
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+
 import json
-from openai import OpenAI
+import openai
+import os
 from junitparser import JUnitXml
-from pathlib import Path
-from xml.etree.ElementTree import ParseError
 
-TEST_XML_PATH = "pytest_results.xml"
-ZAP_REPORT_PATH = "zap_report.json"
-SONAR_REPORT_PATH = "sonar-report.json"
-OUTPUT_PATH = "gpt_report.html"
+# 1) Настройка API-ключа
+openai.api_key = os.getenv("OPENAI_API_KEY")
 
+def load_text(path):
+    with open(path, encoding='utf-8') as f:
+        return f.read()
 
-def extract_pytest_summary(xml_path):
-    path = Path(xml_path)
-    if not path.exists():
-        return "<h2>Pytest</h2><p>❌ pytest_results.xml not found.</p>"
-    try:
-        xml = JUnitXml.fromfile(xml_path)
-        total = sum(suite.tests for suite in xml)
-        failures = sum(suite.failures for suite in xml)
-        errors = sum(suite.errors for suite in xml)
-        return f"<h2>Pytest</h2><ul><li>Total: {total}</li><li>Failures: {failures}</li><li>Errors: {errors}</li></ul>"
-    except ParseError:
-        return "<h2>Pytest</h2><p>❌ Failed to parse pytest_results.xml.</p>"
+def parse_pytest(xml_path):
+    xml = JUnitXml.fromfile(xml_path)
+    total = sum(suite.testsuite_tests for suite in xml)
+    failures = sum(suite.testsuite_failures for suite in xml)
+    errors = sum(suite.testsuite_errors for suite in xml)
+    skipped = sum(suite.testsuite_skipped for suite in xml)
+    return f"Total: {total}, Failures: {failures}, Errors: {errors}, Skipped: {skipped}"
 
+def summarize_sonar(sonar_path, max_items=10):
+    data = json.load(open(sonar_path, encoding='utf-8'))
+    issues = data.get("issues", [])[:max_items]
+    lines = []
+    for i, iss in enumerate(issues, 1):
+        lines.append(f"{i}. {iss['rule']} ({iss['severity']}): {iss.get('message','')}")
+    return "\n".join(lines) or "Нет новых проблем."
 
-def extract_zap_summary(path):
-    try:
-        with open(path, "r", encoding="utf-8") as f:
-            data = json.load(f)
-        alerts = data.get("site", [])[0].get("alerts", [])
-        html = f"<h2>ZAP Scan</h2><ul>"
-        for alert in alerts[:10]:
-            html += f"<li>{alert['alert']} - Risk: {alert['riskdesc']}</li>"
-        html += "</ul>"
-        return html
-    except:
-        return "<h2>ZAP Scan</h2><p>❌ Failed to load zap_report.json</p>"
+def build_prompt(pytest_summary, sonar_summary, zap_html):
+    return f"""
+You are a senior Security QA engineer. Generate a full HTML report with sections:
 
+<h1>1. Pytest Results</h1>
+<pre>{pytest_summary}</pre>
 
-def extract_sonar_issues(path):
-    if not Path(path).exists():
-        return "<h2>SonarCloud</h2><p>❌ sonar-report.json not found</p>"
-    data = json.loads(Path(path).read_text())
-    html = "<h2>SonarCloud</h2><ul>"
-    for issue in data.get("issues", [])[:10]:
-        html += f"<li><b>{issue['severity']}</b> in <code>{issue['component'].split(':')[-1]}</code> (line {issue.get('textRange', {}).get('startLine', '?')}): {issue['message']}</li>"
-    html += "</ul>"
-    return html
+<h1>2. SonarCloud Analysis</h1>
+<pre>
+{sonar_summary}
+</pre>
 
+<h1>3. OWASP ZAP Findings</h1>
+Please parse this HTML and list each finding with its risk and recommendation:
+<details><summary>ZAP Report HTML</summary>
+{zap_html}
+</details>
 
-def generate_html_report():
-    pytest = extract_pytest_summary(TEST_XML_PATH)
-    zap = extract_zap_summary(ZAP_REPORT_PATH)
-    sonar = extract_sonar_issues(SONAR_REPORT_PATH)
+<h1>4. AI-Assisted Summary & Recommendations</h1>
+Provide a concise executive summary and prioritized next steps.
+"""
 
-    html = f"""<html><head><meta charset="UTF-8"><title>CI QA Report</title></head><body>
-    <h1>🔒 Automated QA Security Report</h1>
-    {pytest}
-    {sonar}
-    {zap}
-    </body></html>
-    """
-    with open(OUTPUT_PATH, "w", encoding="utf-8") as f:
-        f.write(html)
-    print("✅ Report saved to", OUTPUT_PATH)
+def main():
+    # Пути к файлам в рабочей директории
+    pytest_xml = "pytest_results.xml"
+    sonar_json = "sonar-report.json"
+    zap_html   = "zap_report.html"
 
+    # Загружаем и парсим
+    pytest_summary = parse_pytest(pytest_xml)
+    sonar_summary  = summarize_sonar(sonar_json)
+    zap_content    = load_text(zap_html)
+
+    prompt = build_prompt(pytest_summary, sonar_summary, zap_content)
+
+    response = openai.ChatCompletion.create(
+        model="gpt-4o-mini",
+        messages=[{"role":"user","content":prompt}],
+        temperature=0.2,
+    )
+
+    report_html = response.choices[0].message.content
+
+    # Сохраняем итоговый HTML
+    with open("gpt_report.html", "w", encoding='utf-8') as f:
+        f.write(report_html)
 
 if __name__ == "__main__":
-    generate_html_report()
+    main()
