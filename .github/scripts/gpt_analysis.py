@@ -15,10 +15,10 @@ def load_text(path):
 
 def parse_pytest(xml_path):
     xml = JUnitXml.fromfile(xml_path)
-    total = sum(suite.testsuite_tests for suite in xml)
-    failures = sum(suite.testsuite_failures for suite in xml)
-    errors = sum(suite.testsuite_errors for suite in xml)
-    skipped = sum(suite.testsuite_skipped for suite in xml)
+    total    = sum(suite.tests    for suite in xml)
+    failures = sum(suite.failures for suite in xml)
+    errors   = sum(suite.errors   for suite in xml)
+    skipped  = sum(suite.skipped  for suite in xml)
     return f"Total: {total}, Failures: {failures}, Errors: {errors}, Skipped: {skipped}"
 
 def summarize_sonar(sonar_path, max_items=10):
@@ -52,12 +52,10 @@ Provide a concise executive summary and prioritized next steps.
 """
 
 def main():
-    # Пути к файлам в рабочей директории
     pytest_xml = "pytest_results.xml"
     sonar_json = "sonar-report.json"
     zap_html   = "zap_report.html"
 
-    # Загружаем и парсим
     pytest_summary = parse_pytest(pytest_xml)
     sonar_summary  = summarize_sonar(sonar_json)
     zap_content    = load_text(zap_html)
@@ -72,7 +70,6 @@ def main():
 
     report_html = response.choices[0].message.content
 
-    # Сохраняем итоговый HTML
     with open("gpt_report.html", "w", encoding='utf-8') as f:
         f.write(report_html)
 
