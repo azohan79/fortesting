@@ -109,6 +109,25 @@ jobs:
     steps:
       - uses: actions/checkout@v3
 
+      # bring in the earlier artifacts
+      - name: Download Pytest Results
+        uses: actions/download-artifact@v4
+        with:
+          name: pytest-results
+          path: .
+
+      - name: Download SonarCloud Report
+        uses: actions/download-artifact@v4
+        with:
+          name: sonar-report
+          path: .
+
+      - name: Download ZAP Report
+        uses: actions/download-artifact@v4
+        with:
+          name: zap-report
+          path: .
+
       - uses: actions/setup-python@v4
         with:
           python-version: '3.10'
