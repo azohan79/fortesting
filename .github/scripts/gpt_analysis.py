@@ -21,56 +21,69 @@ def parse_pytest(xml_path):
 def summarize_sonar(sonar_path, max_items=10):
     data = json.load(open(sonar_path, encoding='utf-8'))
     issues = data.get("issues", [])[:max_items]
+    if not issues:
+        return "Нет новых проблем."
     lines = []
     for i, iss in enumerate(issues, 1):
         lines.append(f"{i}. {iss['rule']} ({iss['severity']}): {iss.get('message','')}")
-    return "\n".join(lines) or "Нет новых проблем."
+    return "\n".join(lines)
 
-def build_prompt(pytest_summary, sonar_summary, zap_html):
+def summarize_zap(zap_json_path, max_items=10):
+    data = json.load(open(zap_json_path, encoding='utf-8'))
+    alerts = data.get("alerts", [])[:max_items]
+    if not alerts:
+        return "Уязвимости не найдены."
+    lines = []
+    for i, a in enumerate(alerts, 1):
+        name = a.get("name", "N/A")
+        risk = a.get("risk", "UNKNOWN")
+        url  = a.get("url", "")
+        lines.append(f"{i}. {name} (Risk: {risk}) — {url}")
+    return "\n".join(lines)
+
+def build_prompt(pytest_summary, sonar_summary, zap_summary):
     return f"""
 <h1>1. Pytest Results</h1>
 <pre>{pytest_summary}</pre>
 
 <h1>2. SonarCloud Analysis</h1>
-<pre>
-{sonar_summary}
-</pre>
+<pre>{sonar_summary}</pre>
 
-<h1>3. OWASP ZAP Findings</h1>
-Вставьте каждый найденный уязвимый пункт с уровнем риска и рекомендацией:
-<details><summary>ZAP Report HTML</summary>
-{zap_html}
-</details>
+<h1>3. OWASP ZAP Summary (top 10)</h1>
+<pre>{zap_summary}</pre>
 
 <h1>4. AI-Assisted Summary & Recommendations</h1>
-Предоставьте краткий executive summary и приоритетные шаги.
+Сделайте краткий executive summary и приоритизацию исправлений.
 """
 
 def main():
-    # пути к артефактам
-    pytest_xml = "pytest_results.xml"
-    sonar_json = "sonar-report.json"
-    zap_html   = "zap_report.html"
+    # Пути к артефактам
+    pytest_xml   = "pytest_results.xml"
+    sonar_json   = "sonar-report.json"
+    zap_json     = "zap_report.json"
 
-    # парсим данные
+    # Парсим
     pytest_summary = parse_pytest(pytest_xml)
     sonar_summary  = summarize_sonar(sonar_json)
-    zap_content    = load_text(zap_html)
+    zap_summary    = summarize_zap(zap_json)
 
-    # собираем промпт
-    prompt = build_prompt(pytest_summary, sonar_summary, zap_content)
+    # Собираем промпт
+    prompt = build_prompt(pytest_summary, sonar_summary, zap_summary)
 
-    # инициализируем клиент и делаем запрос
+    # Инициализируем клиента
     client = OpenAI()
+
+    # Отправляем запрос
     response = client.chat.completions.create(
         model="gpt-4o-mini",
         messages=[{"role":"user","content":prompt}],
         temperature=0.2,
     )
 
+    # Получаем HTML из ответа
     report_html = response.choices[0].message.content
 
-    # сохраняем результат
+    # Сохраняем результат
     with open("gpt_report.html", "w", encoding='utf-8') as f:
         f.write(report_html)
 
